@@ -5,6 +5,7 @@ import { marked } from "marked";
 import { TiStarFullOutline } from "react-icons/ti";
 import { HiSpeakerWave } from "react-icons/hi2";
 import { BACKEND_URL } from "../constants/globals";
+import { FadeLoader } from "react-spinners";
 
 export default function ArticlesPage() {
   const searchParams = new URLSearchParams(window.location.search);
@@ -25,6 +26,8 @@ export default function ArticlesPage() {
   const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
   const [limit, setLimit] = useState(Number(searchParams.get("limit")) || 10);
   const [total, setTotal] = useState(0);
+
+  const [loading, setLoading] = useState(false);
 
   const PRICING = ["All", "Free", "Premium"];
 
@@ -70,6 +73,7 @@ export default function ArticlesPage() {
   // Fetch articles when filters/pagination/debouncedQuery change
   useEffect(() => {
     async function fetchArticles() {
+      setLoading(true);
       const allRes = await fetch(
         `${BACKEND_URL}/api/content/all?page=${page}&limit=${limit}&category=${category}&pricing=${pricing}&query=${encodeURIComponent(
           debouncedQuery
@@ -90,6 +94,7 @@ export default function ArticlesPage() {
 
       setArticles(allData.payload.data);
       setTotal(allData.payload.total || 0);
+      setLoading(false);
     }
     fetchArticles();
   }, [page, limit, category, pricing, debouncedQuery]);
@@ -150,6 +155,18 @@ export default function ArticlesPage() {
       <div ref={topRef}></div>
       <div className="max-w-7xl py-6 mx-auto space-y-6">
         <Header />
+
+        {loading && (
+          <div className="fixed z-[100] top-0 right-0 h-full w-full bg-gray-400/90 flex items-center justify-center">
+            <FadeLoader
+              color={"#fff"}
+              loading={loading}
+              size={150}
+              aria-label="Loading Spinner"
+              data-testid="loader"
+            />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Filters */}
@@ -495,6 +512,7 @@ function SearchBox({ query, setQuery }) {
         placeholder="Search articles..."
         className="pl-3 pr-3 bg-gray-300 py-2 w-full rounded-lg border text-sm"
       />
+      <FiSearch className="absolute top-[10px] right-2" />
     </div>
   );
 }
