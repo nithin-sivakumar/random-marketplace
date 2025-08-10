@@ -6,7 +6,9 @@ const app = express();
 
 app.use(
   cors({
-    origin: "*",
+    origin: "https://random-marketplace.vercel.app",
+    methods: ["GET", "POST"],
+    credentials: true,
   })
 );
 
