@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FiSearch, FiFilter, FiX } from "react-icons/fi";
 import { marked } from "marked";
 import { TiStarFullOutline } from "react-icons/ti";
+import { HiSpeakerWave } from "react-icons/hi2";
 
 export default function ArticlesPage() {
   const searchParams = new URLSearchParams(window.location.search);
@@ -31,6 +32,8 @@ export default function ArticlesPage() {
   const emojis = ["👍", "❤️", "💀", "😂", "😭", "🔥"];
 
   const topRef = useRef(null);
+
+  const [isNarrating, setIsNarrating] = useState(false);
 
   useEffect(() => {
     if (topRef.current) {
@@ -115,6 +118,31 @@ export default function ArticlesPage() {
     if (sort === "title") out.sort((a, b) => a.title.localeCompare(b.title));
     return out;
   }, [articles, query, category, sort, pricing]);
+
+  const handleNarrateToggle = () => {
+    if (!selectedArticle?.content) return;
+
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+      setIsNarrating(false);
+    } else {
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = selectedArticle.content;
+      const plainText = tempDiv.textContent.trim();
+
+      const utterance = new SpeechSynthesisUtterance(plainText);
+      utterance.lang = "en-US";
+      utterance.rate = 1;
+      utterance.pitch = 1;
+
+      // When narration ends, reset button label
+      utterance.onend = () => setIsNarrating(false);
+      utterance.onerror = () => setIsNarrating(false);
+
+      window.speechSynthesis.speak(utterance);
+      setIsNarrating(true);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-400 via-gray-200 to-white px-6">
@@ -370,19 +398,29 @@ export default function ArticlesPage() {
                 className="max-w-5xl w-full bg-gray-300 rounded-2xl shadow-xl p-6 overflow-y-hidden max-h-[90vh] space-y-4"
               >
                 <div className="flex items-start justify-between gap-4">
-                  <div>
+                  <div className="w-full">
                     <h3 className="text-xl font-bold">
                       {selectedArticle.title}
                     </h3>
-                    <div className="text-sm text-gray-500 mt-4">
-                      <span className="bg-blue-500 font-semibold py-1 px-2 rounded-full text-white">
-                        {selectedArticle.category}
-                      </span>
-                      {selectedArticle.isPremium && (
-                        <span className="bg-amber-500 font-semibold ml-2 py-1 px-2 rounded-full text-white">
-                          Premium
+                    <div className="text-sm text-gray-500 mt-4 flex items-center justify-between w-full">
+                      <div>
+                        <span className="bg-blue-500 font-semibold py-1 px-2 rounded-full text-white">
+                          {selectedArticle.category}
                         </span>
-                      )}
+                        {selectedArticle.isPremium && (
+                          <span className="bg-amber-500 font-semibold ml-2 py-1 px-2 rounded-full text-white">
+                            Premium
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        onClick={handleNarrateToggle}
+                        className="ml-4 text-black cursor-pointer hover:bg-gray-400 border border-gray-700 px-4 py-1 rounded-xl"
+                      >
+                        <span className="font-semibold">
+                          {isNarrating ? "Stop narration" : "Narrate article"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <button
@@ -393,7 +431,7 @@ export default function ArticlesPage() {
                   </button>
                 </div>
                 <div
-                  className="prose leading-relaxed max-w-none pr-2 overflow-y-auto max-h-[70vh] flex flex-col gap-2"
+                  className="prose leading-relaxed max-w-none pr-2 overflow-y-auto max-h-[70vh] flex flex-col"
                   dangerouslySetInnerHTML={{
                     __html: marked.parse(selectedArticle.content),
                   }}

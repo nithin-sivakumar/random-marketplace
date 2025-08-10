@@ -64,7 +64,7 @@ Output format: JSON
     const parsedResult = safeJsonParse(content);
 
     console.log(variables.ENVIRONMENT === "dev" && `[DEV] Parsed result start`);
-    console.log(variables.ENVIRONMENT === "dev" && `${parsedResult}`);
+    console.log(variables.ENVIRONMENT === "dev" && `${parsedResult.data}`);
     console.log(variables.ENVIRONMENT === "dev" && `[DEV] Parsed result end`);
 
     if (parsedResult.success) {
@@ -117,14 +117,15 @@ Output format: JSON
 }
 `;
 
-  const prompt = `Write a long, deeply thoughtful, HTML-formatted article (1500–2000 words) on ${category}.
+  const prompt = `Write a long, deeply thoughtful, HTML-formatted article (1500-2000 words) on ${category}.
 It should keep the reader engaged. Make it interesting, insightful and factual.
 Use clear sections, examples, small frameworks/steps, and end with a strong conclusion.
+Make sure it passes the anti-ai check (must seem like a real human has written it). Do not use words that AI would repeatedly use (like delve into, unravel, mysteries, etc)
 
 IMPORTANT: The final output MUST be a single, valid JSON object (no extra text before/after, no explanations).
 Return JSON exactly in this shape and key order:
 {
-  "title": "post-title-here-without-special-characters",
+  "title": "post-title-here",
   "content": "post-content-here-in-html-and-ensure-proper-closing-tags-don't-render-title-here",
   "category": "Category-Here-In-Title-Case",
   "caption": "clickbait-one-line-summary-of-this-entire-document",
@@ -148,7 +149,7 @@ STRICT HTML & STYLE RULES (must follow exactly):
 10. Keep the article factual — where claims need verification, prefer conservative phrasing (e.g., "studies show", "according to X") — but DO NOT add citations or external links in the JSON.
 
 FIELD RULES:
-- title: short, human-like, no special characters (use dashes or letters only). Do NOT include the title inside content.
+- title: short, human-like, no special characters (letters only). Do NOT include the title inside content.
 - category: Title Case (e.g., "Artificial Intelligence").
 - caption: one-line clickbait-style summary of the whole post (single sentence).
 - isPremium: preserve placeholder interpolation ${randomBooleanValue} (do not change its syntax).
