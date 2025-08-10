@@ -26,7 +26,7 @@ Use sections, examples, frameworks, and a strong conclusion.
 Do not make any assumptions, this is a blog post, so data must be factual.
 
 Instructions: Never return summaries, captions, any additional information. Stick to the output format strictly.
-Return the response as valid JSON with double-escaped newlines (\\n) inside string values, especially in the "content" field which uses markdown.
+Return the response as valid JSON.
 
 Output format: JSON
 {
