@@ -6,7 +6,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "https://random-marketplace.vercel.app",
+    origin: ["https://random-marketplace.vercel.app", "http://localhost:5173"],
     methods: ["GET", "POST"],
     credentials: true,
   })
