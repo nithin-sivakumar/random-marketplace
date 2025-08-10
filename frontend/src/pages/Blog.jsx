@@ -413,37 +413,37 @@ export default function ArticlesPage() {
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.95, y: 20 }}
-                className="max-w-5xl w-full bg-gray-300 rounded-2xl shadow-xl p-6 overflow-y-hidden max-h-[90vh] space-y-4"
+                className="max-w-5xl w-full bg-gray-300 rounded-2xl shadow-xl p-6 overflow-y-hidden max-h-[90vh] space-y-0"
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between">
                   <div className="w-full">
                     <h3 className="text-xl font-bold">
                       {selectedArticle.title}
                     </h3>
-                    <div className="text-sm text-gray-500 mt-4 flex items-center justify-between w-full">
-                      <div>
+                    <div className="gap-2 text-xs md:text-sm text-gray-500 mt-4 flex flex-col md:flex-row items-start md:items-center justify-between w-full">
+                      <div className="flex gap-2">
                         <span className="bg-blue-500 font-semibold py-1 px-2 rounded-full text-white">
                           {selectedArticle.category}
                         </span>
                         {selectedArticle.isPremium && (
-                          <span className="bg-amber-500 font-semibold ml-2 py-1 px-2 rounded-full text-white">
+                          <span className="bg-amber-500 font-semibold py-1 px-2 rounded-full text-white">
                             Premium
                           </span>
                         )}
                       </div>
                       <div
                         onClick={handleNarrateToggle}
-                        className="ml-4 text-black cursor-pointer hover:bg-gray-400 border border-gray-700 px-4 py-1 rounded-xl"
+                        className="text-black cursor-pointer bg-gray-600 border border-gray-700 px-4 py-1 rounded-xl"
                       >
                         <span className="font-semibold">
-                          {isNarrating ? "Stop narration" : "Narrate article"}
+                          {isNarrating ? "🔇" : "🔊"}
                         </span>
                       </div>
                     </div>
                   </div>
                   <button
                     onClick={() => setSelectedArticle(null)}
-                    className="p-2 cursor-pointer rounded-full hover:bg-gray-300"
+                    className="p-2 cursor-pointer rounded-full hover:bg-gray-400"
                   >
                     <FiX />
                   </button>
