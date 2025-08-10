@@ -2,15 +2,17 @@ import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiSearch, FiFilter, FiLock, FiX } from "react-icons/fi";
 import { marked } from "marked";
+import Markdown from "react-markdown";
+import { TiStarFullOutline } from "react-icons/ti";
 
-const CATEGORIES = [
-  "All",
-  "Tech",
-  "Design",
-  "Business",
-  "Lifestyle",
-  "Science",
-];
+// const CATEGORIES = [
+//   "All",
+//   "Tech",
+//   "Design",
+//   "Business",
+//   "Lifestyle",
+//   "Science",
+// ];
 
 export default function ArticlesPage() {
   const [query, setQuery] = useState("");
@@ -19,6 +21,10 @@ export default function ArticlesPage() {
   const [articles, setArticles] = useState([]);
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [CATEGORIES, setCategories] = useState(["All"]);
+  const [pricing, setPricing] = useState("All");
+
+  const PRICING = ["All", "Free", "Premium"];
 
   useEffect(() => {
     async function fetchArticles() {
@@ -36,6 +42,12 @@ export default function ArticlesPage() {
     fetchArticles();
   }, []);
 
+  useEffect(() => {
+    setCategories((prev) => [
+      ...new Set([...prev, ...new Set(articles.map((a) => a.category))]),
+    ]);
+  }, [articles]);
+
   const filtered = useMemo(() => {
     let out = articles.filter((p) => {
       const matchesQuery = (p.title + p.content + p.category)
@@ -43,11 +55,17 @@ export default function ArticlesPage() {
         .includes(query.toLowerCase());
       const matchesCategory =
         category === "All" ? true : p.category === category;
-      return matchesQuery && matchesCategory;
+      const matchesPricing =
+        pricing === "All"
+          ? true
+          : pricing === "Free"
+          ? !p.isPremium
+          : p.isPremium;
+      return matchesQuery && matchesCategory && matchesPricing;
     });
     if (sort === "title") out.sort((a, b) => a.title.localeCompare(b.title));
     return out;
-  }, [articles, query, category, sort]);
+  }, [articles, query, category, sort, pricing]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-6">
@@ -66,6 +84,26 @@ export default function ArticlesPage() {
               <SearchBox query={query} setQuery={setQuery} />
               <div>
                 <label className="block text-xs text-gray-500 mb-2">
+                  Pricing
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {PRICING.map((p, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setPricing(p)}
+                      className={`px-3 py-1.5 rounded-full text-sm border transition ${
+                        pricing === p
+                          ? "bg-indigo-600 text-white border-indigo-600"
+                          : "bg-white text-gray-700 border-gray-400"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-2">
                   Category
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -76,7 +114,7 @@ export default function ArticlesPage() {
                       className={`px-3 py-1.5 rounded-full text-sm border transition ${
                         category === c
                           ? "bg-indigo-600 text-white border-indigo-600"
-                          : "bg-white text-gray-700 border-gray-200"
+                          : "bg-white text-gray-700 border-gray-400"
                       }`}
                     >
                       {c}
@@ -122,18 +160,19 @@ export default function ArticlesPage() {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 8 }}
-                    whileHover={{ translateY: -6 }}
-                    className="bg-white border rounded-2xl p-5 shadow-sm cursor-pointer space-y-3"
+                    className="bg-white border-2 border-dashed hover:bg-indigo-200 hover:-translate-y-1 transition-all duration-150 rounded-2xl p-5 shadow-sm cursor-pointer space-y-3"
                     onClick={() => setSelectedArticle(p)}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-2">
                       <div className="font-semibold text-lg">{p.title}</div>
-                      {p.isPremium && <FiLock className="text-yellow-500" />}
+                      {p.isPremium && (
+                        <span>
+                          <TiStarFullOutline className="bg-yellow-500 p-1 rounded-full text-white text-2xl" />
+                        </span>
+                      )}
                     </div>
                     <div className="text-sm text-gray-500">{p.category}</div>
-                    <div className="text-xs text-gray-600">
-                      {p.content.slice(0, 100)}...
-                    </div>
+                    <div className="text-xs text-gray-600">{p.caption}</div>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -192,7 +231,7 @@ export default function ArticlesPage() {
         <AnimatePresence>
           {selectedArticle && (
             <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black bg-opacity-50"
+              className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 bg-opacity-50"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -201,33 +240,41 @@ export default function ArticlesPage() {
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.95, y: 20 }}
-                className="max-w-3xl w-full bg-white rounded-2xl shadow-xl p-6 overflow-y-auto max-h-[90vh] space-y-4"
+                className="max-w-5xl w-full bg-white rounded-2xl shadow-xl p-6 overflow-y-hidden max-h-[90vh] space-y-4"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className="text-xl font-bold">
                       {selectedArticle.title}
                     </h3>
-                    <div className="text-sm text-gray-500 mt-1">
-                      {selectedArticle.category}{" "}
+                    <div className="text-sm text-gray-500 mt-4">
+                      <span className="bg-blue-500 font-semibold py-1 px-2 rounded-full text-white">
+                        {selectedArticle.category}
+                      </span>{" "}
                       {selectedArticle.isPremium && (
-                        <span className="text-yellow-600 ml-2">Premium</span>
+                        <span className="bg-amber-500 font-semibold ml-2 py-1 px-2 rounded-full text-white">
+                          Premium
+                        </span>
                       )}
                     </div>
                   </div>
                   <button
                     onClick={() => setSelectedArticle(null)}
-                    className="p-2 rounded-full hover:bg-gray-100"
+                    className="p-2 cursor-pointer rounded-full hover:bg-gray-300"
                   >
                     <FiX />
                   </button>
                 </div>
+                {/* <div>
+                  <Markdown>{selectedArticle.content}</Markdown>
+                  </div> */}
                 <div
-                  className="prose max-w-none"
+                  className="prose leading-relaxed max-w-none pr-2 overflow-y-auto max-h-[70vh] flex flex-col gap-2"
                   dangerouslySetInnerHTML={{
                     __html: marked.parse(selectedArticle.content),
                   }}
                 ></div>
+                <div className="my-4"></div>
               </motion.div>
             </motion.div>
           )}

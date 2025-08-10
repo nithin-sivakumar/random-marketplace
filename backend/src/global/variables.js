@@ -9,6 +9,7 @@ const variables = {
   MAX_LOGIN_ATTEMPTS: process.env.MAX_LOGIN_ATTEMPTS,
   GROQ_API_KEY: process.env.GROQ_API_KEY,
   AUTO_POST_FREQUENCY: process.env.AUTO_POST_FREQUENCY,
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY,
 };
 
 for (let v in variables) {

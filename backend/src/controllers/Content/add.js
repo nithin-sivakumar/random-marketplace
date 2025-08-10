@@ -3,7 +3,7 @@ import ApiResponse from "../../utils/ApiResponse.js";
 
 const addContent = async (req, res) => {
   try {
-    const { title, content, category, isPremium } = req.body;
+    const { title, content, category, caption, isPremium } = req.body;
 
     console.log("[Incoming Body]:", req.body);
 
@@ -16,6 +16,8 @@ const addContent = async (req, res) => {
       title.trim() === "" ||
       typeof content !== "string" ||
       content.trim() === "" ||
+      typeof caption !== "string" ||
+      caption.trim() === "" ||
       typeof category !== "string" ||
       category.trim() === "" ||
       typeof isPremium !== "boolean"
@@ -31,6 +33,7 @@ const addContent = async (req, res) => {
       title,
       content,
       category,
+      caption,
       isPremium,
     });
 
