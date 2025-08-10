@@ -4,6 +4,7 @@ import { FiSearch, FiFilter, FiX } from "react-icons/fi";
 import { marked } from "marked";
 import { TiStarFullOutline } from "react-icons/ti";
 import { HiSpeakerWave } from "react-icons/hi2";
+import { BACKEND_URL } from "../constants/globals";
 
 export default function ArticlesPage() {
   const searchParams = new URLSearchParams(window.location.search);
@@ -70,7 +71,7 @@ export default function ArticlesPage() {
   useEffect(() => {
     async function fetchArticles() {
       const allRes = await fetch(
-        `http://localhost:8000/api/content/all?page=${page}&limit=${limit}&category=${category}&pricing=${pricing}&query=${encodeURIComponent(
+        `${BACKEND_URL}/api/content/all?page=${page}&limit=${limit}&category=${category}&pricing=${pricing}&query=${encodeURIComponent(
           debouncedQuery
         )}`
       );
