@@ -178,16 +178,20 @@ async function generateAndPost() {
   }
 }
 
-generateAndPost();
-
 // 🕒 Schedule
-setInterval(() => {
+if (variables.AUTO_POST === "true") {
   generateAndPost();
-}, autopostFrequency * 1000);
+
+  setInterval(() => {
+    generateAndPost();
+  }, autopostFrequency * 1000);
+}
 // cron.schedule(`*/${autopostFrequency} * * * *`, () => {
 //   generateAndPost();
 // });
 
 console.log(
-  `🚀 Auto-poster is running with node-cron every ${autopostFrequency} second(s).`
+  variables.AUTO_POST === "true"
+    ? `🚀 Auto-poster is running with node-cron every ${autopostFrequency} second(s).`
+    : `🚀 Auto-poster has been disabled 🚀`
 );

@@ -10,6 +10,7 @@ const variables = {
   GROQ_API_KEY: process.env.GROQ_API_KEY,
   AUTO_POST_FREQUENCY: process.env.AUTO_POST_FREQUENCY,
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+  AUTO_POST: process.env.AUTO_POST,
 };
 
 for (let v in variables) {
