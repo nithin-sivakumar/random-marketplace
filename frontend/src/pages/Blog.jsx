@@ -117,7 +117,7 @@ export default function ArticlesPage() {
   }, [articles, query, category, sort, pricing]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white px-6">
+    <div className="min-h-screen bg-gradient-to-b from-gray-400 via-gray-200 to-white px-6">
       <div ref={topRef}></div>
       <div className="max-w-7xl py-6 mx-auto space-y-6">
         <Header />
@@ -128,7 +128,7 @@ export default function ArticlesPage() {
             <motion.div
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="sticky top-6 bg-white border rounded-2xl p-6 shadow-sm space-y-5"
+              className="sticky top-6 border-2 border-gray-500 bg-gray-300/40 backdrop-blur-2xl rounded-2xl p-6 shadow-sm space-y-5"
             >
               <h3 className="text-sm font-semibold">Filters</h3>
               <SearchBox query={query} setQuery={setQuery} />
@@ -144,10 +144,10 @@ export default function ArticlesPage() {
                         setPage(1);
                         setPricing(p);
                       }}
-                      className={`px-3 py-1.5 rounded-full text-sm border transition ${
+                      className={`px-3 py-1.5 rounded-full text-sm border transition cursor-pointer ${
                         pricing === p
                           ? "bg-indigo-600 text-white border-indigo-600"
-                          : "bg-white text-gray-700 border-gray-400"
+                          : "bg-gray-200 text-gray-700 border-gray-400"
                       }`}
                     >
                       {p}
@@ -167,10 +167,10 @@ export default function ArticlesPage() {
                         setPage(1);
                         setCategory(c);
                       }}
-                      className={`px-3 py-1.5 rounded-full text-sm border transition ${
+                      className={`px-3 py-1.5 rounded-full text-sm border transition cursor-pointer ${
                         category === c
                           ? "bg-indigo-600 text-white border-indigo-600"
-                          : "bg-white text-gray-700 border-gray-400"
+                          : "bg-gray-200 text-gray-700 border-gray-400"
                       }`}
                     >
                       {c}
@@ -186,7 +186,7 @@ export default function ArticlesPage() {
                     setPage(1);
                     setSort(e.target.value);
                   }}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                  className="w-full cursor-pointer rounded-lg border px-3 py-2 text-sm"
                 >
                   <option value="featured">Featured</option>
                   <option value="title">Title</option>
@@ -198,9 +198,16 @@ export default function ArticlesPage() {
           {/* Articles */}
           <main className="lg:col-span-3 space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">{pricing} articles</h2>
+              <h2 className="text-2xl font-bold">
+                {pricing === "Premium"
+                  ? "Curated"
+                  : pricing === "Free"
+                  ? "Top"
+                  : ""}{" "}
+                {pricing} articles
+              </h2>
               <button
-                className="lg:hidden px-3 py-2 border rounded-lg flex items-center gap-2"
+                className="lg:hidden px-3 py-2 border rounded-lg flex items-center gap-2 cursor-pointer bg-gray-300"
                 onClick={() => setFiltersOpen(true)}
               >
                 <FiFilter /> Filters
@@ -217,7 +224,7 @@ export default function ArticlesPage() {
                     key={idx}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white border-2 border-dashed hover:bg-indigo-200 hover:-translate-y-1 transition-all duration-150 rounded-2xl p-5 shadow-sm cursor-pointer space-y-3"
+                    className="bg-gray-200 border-2 border-dashed hover:-translate-y-2 transition-all duration-200 ease-in-out rounded-2xl p-5 shadow-sm hover:shadow-2xl cursor-pointer space-y-3"
                     onClick={() => setSelectedArticle(p)}
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -245,7 +252,7 @@ export default function ArticlesPage() {
               <button
                 onClick={() => setPage((p) => Math.max(p - 1, 1))}
                 disabled={page === 1}
-                className="px-3 py-1 border rounded disabled:opacity-50"
+                className="px-3 py-1 border border-indigo-600 cursor-pointer hover:bg-indigo-600 hover:text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Prev
               </button>
@@ -257,7 +264,7 @@ export default function ArticlesPage() {
                   setPage((p) => (p < Math.ceil(total / limit) ? p + 1 : p))
                 }
                 disabled={page >= Math.ceil(total / limit)}
-                className="px-3 py-1 border rounded disabled:opacity-50"
+                className="px-3 py-1 border border-indigo-600 cursor-pointer hover:bg-indigo-600 hover:text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>
@@ -267,7 +274,7 @@ export default function ArticlesPage() {
                   setPage(1);
                   setLimit(Number(e.target.value));
                 }}
-                className="ml-4 border rounded px-2 py-1"
+                className="ml-4 cursor-pointer border rounded px-2 py-1"
               >
                 {[10, 20, 30].map((n) => (
                   <option key={n} value={n}>
@@ -286,18 +293,21 @@ export default function ArticlesPage() {
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-xl z-50 lg:hidden flex flex-col"
+              className="fixed inset-y-0 right-0 w-full max-w-md bg-gray-300 rounded-l-2xl shadow-xl z-50 lg:hidden flex flex-col"
             >
               <div className="p-4 border-b flex items-center justify-between">
                 <h3 className="font-semibold">Filters</h3>
-                <button className="p-2" onClick={() => setFiltersOpen(false)}>
+                <button
+                  className="p-2 cursor-pointer hover:bg-gray-400 rounded-full"
+                  onClick={() => setFiltersOpen(false)}
+                >
                   <FiX />
                 </button>
               </div>
               <div className="p-4 space-y-4 flex-1 overflow-y-auto">
                 <SearchBox query={query} setQuery={setQuery} />
                 <div>
-                  <label className="block text-xs text-gray-500 mb-2">
+                  <label className="block text-xs text-gray-700 mb-2">
                     Pricing
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -308,10 +318,10 @@ export default function ArticlesPage() {
                           setPage(1);
                           setPricing(p);
                         }}
-                        className={`px-3 py-1.5 rounded-full text-sm border transition ${
+                        className={`px-3 py-1.5 rounded-full text-sm border transition cursor-pointer ${
                           pricing === p
                             ? "bg-indigo-600 text-white border-indigo-600"
-                            : "bg-white text-gray-700 border-gray-400"
+                            : "bg-gray-200 text-gray-700 border-gray-400"
                         }`}
                       >
                         {p}
@@ -320,7 +330,7 @@ export default function ArticlesPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-2">
+                  <label className="block text-xs text-gray-700 mb-2">
                     Category
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -328,10 +338,10 @@ export default function ArticlesPage() {
                       <button
                         key={c}
                         onClick={() => setCategory(c)}
-                        className={`px-3 py-1.5 rounded-full text-sm border transition ${
+                        className={`px-3 py-1.5 rounded-full text-sm border transition cursor-pointer ${
                           category === c
                             ? "bg-indigo-600 text-white border-indigo-600"
-                            : "bg-white text-gray-700 border-gray-200"
+                            : "bg-gray-200 text-gray-700 border-gray-200"
                         }`}
                       >
                         {c}
@@ -357,7 +367,7 @@ export default function ArticlesPage() {
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.95, y: 20 }}
-                className="max-w-5xl w-full bg-white rounded-2xl shadow-xl p-6 overflow-y-hidden max-h-[90vh] space-y-4"
+                className="max-w-5xl w-full bg-gray-300 rounded-2xl shadow-xl p-6 overflow-y-hidden max-h-[90vh] space-y-4"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -393,11 +403,14 @@ export default function ArticlesPage() {
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.95, y: 20 }}
-                className="mt-2 select-none bg-white rounded-2xl shadow-xl px-6 py-2 flex items-center justify-center gap-2"
+                className="mt-2 select-none bg-gray-300 rounded-2xl shadow-xl px-6 py-2 flex items-center justify-center gap-2"
               >
-                {emojis.map((e) => {
+                {emojis.map((e, index) => {
                   return (
-                    <button className="text-2xl grayscale-50 hover:grayscale-0 cursor-pointer hover:scale-150 transition-all duration-150 active:scale-75">
+                    <button
+                      key={index}
+                      className="text-2xl grayscale-50 hover:grayscale-0 cursor-pointer hover:scale-150 transition-all duration-150 active:scale-75"
+                    >
                       {e}
                     </button>
                   );
@@ -416,8 +429,11 @@ function Header() {
     <header className="flex items-center justify-between">
       <div className="flex items-center gap-3">
         <motion.div
-          initial={{ rotate: 0 }}
-          animate={{ rotate: 360, transition: { duration: 1.4 } }}
+          initial={{ rotateX: 0 }}
+          animate={{
+            rotate: 360,
+            transition: { duration: 1.4, repeat: Infinity },
+          }}
           className="rounded-full bg-indigo-600 w-12 h-12 flex items-center justify-center text-white font-bold"
         >
           RM
@@ -438,7 +454,7 @@ function SearchBox({ query, setQuery }) {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search articles..."
-        className="pl-3 pr-3 py-2 w-full rounded-lg border text-sm"
+        className="pl-3 pr-3 bg-gray-300 py-2 w-full rounded-lg border text-sm"
       />
     </div>
   );
