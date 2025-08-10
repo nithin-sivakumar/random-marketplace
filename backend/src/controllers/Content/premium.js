@@ -3,7 +3,14 @@ import ApiResponse from "../../utils/ApiResponse.js";
 
 const getPremiumContent = async (req, res) => {
   try {
-    const premiumContent = await Content.find({ isPremium: true });
+    let { page, limit } = req.query;
+    if (!page || !limit) {
+      page = 1;
+      limit = 5;
+    }
+    const premiumContent = await Content.find({ isPremium: true })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     res
       .status(200)

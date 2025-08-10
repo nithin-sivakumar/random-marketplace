@@ -34,13 +34,24 @@ export default function ArticlesPage() {
       );
       const freeData = await freeRes.json();
       const premiumData = await premiumRes.json();
-      setArticles([
+
+      const combined = [
         ...(freeData.payload || []),
         ...(premiumData.payload || []),
-      ]);
+      ];
+
+      // Fisher–Yates shuffle
+      for (let i = combined.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [combined[i], combined[j]] = [combined[j], combined[i]];
+      }
+
+      setArticles(combined);
     }
     fetchArticles();
   }, []);
+
+  console.log("Articles fetched:", articles);
 
   useEffect(() => {
     setCategories((prev) => [
