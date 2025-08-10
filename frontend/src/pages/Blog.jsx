@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiSearch, FiFilter, FiX } from "react-icons/fi";
 import { marked } from "marked";
@@ -27,6 +27,16 @@ export default function ArticlesPage() {
   const PRICING = ["All", "Free", "Premium"];
 
   const [debouncedQuery, setDebouncedQuery] = useState(query);
+
+  const emojis = ["👍", "❤️", "💀", "😂", "😭", "🔥"];
+
+  const topRef = useRef(null);
+
+  useEffect(() => {
+    if (topRef.current) {
+      topRef.current.scrollIntoView({ behaviour: "smooth" });
+    }
+  }, [page]);
 
   // Sync state → URL params
   useEffect(() => {
@@ -107,8 +117,9 @@ export default function ArticlesPage() {
   }, [articles, query, category, sort, pricing]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white px-6">
+      <div ref={topRef}></div>
+      <div className="max-w-7xl py-6 mx-auto space-y-6">
         <Header />
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -187,7 +198,7 @@ export default function ArticlesPage() {
           {/* Articles */}
           <main className="lg:col-span-3 space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Articles</h2>
+              <h2 className="text-2xl font-bold">{pricing} articles</h2>
               <button
                 className="lg:hidden px-3 py-2 border rounded-lg flex items-center gap-2"
                 onClick={() => setFiltersOpen(true)}
@@ -204,10 +215,8 @@ export default function ArticlesPage() {
                 {filtered.map((p, idx) => (
                   <motion.div
                     key={idx}
-                    layout
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 8 }}
                     className="bg-white border-2 border-dashed hover:bg-indigo-200 hover:-translate-y-1 transition-all duration-150 rounded-2xl p-5 shadow-sm cursor-pointer space-y-3"
                     onClick={() => setSelectedArticle(p)}
                   >
@@ -339,7 +348,7 @@ export default function ArticlesPage() {
         <AnimatePresence>
           {selectedArticle && (
             <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 bg-opacity-50"
+              className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 bg-black/80 bg-opacity-50"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -380,6 +389,20 @@ export default function ArticlesPage() {
                   }}
                 ></div>
               </motion.div>
+              <div
+                initial={{ scale: 0.95, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.95, y: 20 }}
+                className="mt-2 select-none bg-white rounded-2xl shadow-xl px-6 py-2 flex items-center justify-center gap-2"
+              >
+                {emojis.map((e) => {
+                  return (
+                    <button className="text-2xl grayscale-50 hover:grayscale-0 cursor-pointer hover:scale-150 transition-all duration-150 active:scale-75">
+                      {e}
+                    </button>
+                  );
+                })}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -392,12 +415,16 @@ function Header() {
   return (
     <header className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className="rounded-full bg-indigo-600 w-12 h-12 flex items-center justify-center text-white font-bold">
-          NU
-        </div>
+        <motion.div
+          initial={{ rotate: 0 }}
+          animate={{ rotate: 360, transition: { duration: 1.4 } }}
+          className="rounded-full bg-indigo-600 w-12 h-12 flex items-center justify-center text-white font-bold"
+        >
+          RM
+        </motion.div>
         <div>
           <div className="text-xs text-gray-500">Blog</div>
-          <div className="text-lg font-semibold">NextUnique Articles</div>
+          <div className="text-lg font-semibold">Random Marketplace</div>
         </div>
       </div>
     </header>
