@@ -3,21 +3,33 @@ import ApiResponse from "../../utils/ApiResponse.js";
 
 const getPremiumContent = async (req, res) => {
   try {
-    let { page, limit } = req.query;
+    let { page, limit, category } = req.query;
     if (!page || !limit) {
       page = 1;
       limit = 5;
     }
-    const premiumContent = await Content.find({ isPremium: true })
-      .skip((page - 1) * limit)
-      .limit(limit);
+
+    let count = 0,
+      premiumContent = [];
+
+    if (category === "All") {
+      count = await Content.countDocuments({ isPremium: true });
+      premiumContent = await Content.find({ isPremium: true })
+        .skip((page - 1) * limit)
+        .limit(limit);
+    } else {
+      count = await Content.countDocuments({ isPremium: true, category });
+      premiumContent = await Content.find({ isPremium: true, category })
+        .skip((page - 1) * limit)
+        .limit(limit);
+    }
 
     res
       .status(200)
       .send(
         new ApiResponse(
           200,
-          premiumContent,
+          { data: premiumContent, total: count },
           "Premium contents fetched successfully."
         )
       );

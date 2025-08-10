@@ -11,4 +11,6 @@ contentRouter.route("/premium").get(contentController.premium);
 
 contentRouter.route("/add").post(contentController.add);
 
+contentRouter.route("/all").get(contentController.getAll);
+
 export default contentRouter;

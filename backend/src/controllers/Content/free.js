@@ -3,19 +3,34 @@ import ApiResponse from "../../utils/ApiResponse.js";
 
 const getFreeContent = async (req, res) => {
   try {
-    let { page, limit } = req.query;
+    let { page, limit, category } = req.query;
     if (!page || !limit) {
       page = 1;
       limit = 5;
     }
-    const freeContent = await Content.find({ isPremium: false })
-      .skip((page - 1) * limit)
-      .limit(limit);
+    let count = 0,
+      freeContent = [];
+
+    if (category === "All") {
+      count = await Content.countDocuments({ isPremium: false });
+      freeContent = await Content.find({ isPremium: false })
+        .skip((page - 1) * limit)
+        .limit(limit);
+    } else {
+      count = await Content.countDocuments({ isPremium: false, category });
+      freeContent = await Content.find({ isPremium: false, category })
+        .skip((page - 1) * limit)
+        .limit(limit);
+    }
 
     res
       .status(200)
       .send(
-        new ApiResponse(200, freeContent, "Free contents fetched successfully.")
+        new ApiResponse(
+          200,
+          { data: freeContent, total: count },
+          "Free contents fetched successfully."
+        )
       );
   } catch (error) {
     console.log(error);

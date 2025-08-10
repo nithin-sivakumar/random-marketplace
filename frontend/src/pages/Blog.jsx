@@ -1,67 +1,95 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiSearch, FiFilter, FiLock, FiX } from "react-icons/fi";
+import { FiSearch, FiFilter, FiX } from "react-icons/fi";
 import { marked } from "marked";
-import Markdown from "react-markdown";
 import { TiStarFullOutline } from "react-icons/ti";
 
-// const CATEGORIES = [
-//   "All",
-//   "Tech",
-//   "Design",
-//   "Business",
-//   "Lifestyle",
-//   "Science",
-// ];
-
 export default function ArticlesPage() {
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("All");
-  const [sort, setSort] = useState("featured");
+  const searchParams = new URLSearchParams(window.location.search);
+
+  // Initialize state from URL params (fallback to defaults)
+  const [query, setQuery] = useState(searchParams.get("query") || "");
+  const [category, setCategory] = useState(
+    searchParams.get("category") || "All"
+  );
+  const [sort, setSort] = useState(searchParams.get("sort") || "featured");
   const [articles, setArticles] = useState([]);
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [CATEGORIES, setCategories] = useState(["All"]);
-  const [pricing, setPricing] = useState("All");
+  const [pricing, setPricing] = useState(searchParams.get("pricing") || "All");
+
+  // Pagination state
+  const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
+  const [limit, setLimit] = useState(Number(searchParams.get("limit")) || 10);
+  const [total, setTotal] = useState(0);
 
   const PRICING = ["All", "Free", "Premium"];
 
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
+
+  // Sync state → URL params
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (query) params.set("query", query);
+    if (category) params.set("category", category);
+    if (pricing) params.set("pricing", pricing);
+    if (sort) params.set("sort", sort);
+    params.set("page", page);
+    params.set("limit", limit);
+
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, "", newUrl);
+  }, [query, category, pricing, sort, page, limit]);
+
+  // Debounce logic
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 1000); // 1000ms delay
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [query]);
+
+  // Fetch articles when filters/pagination/debouncedQuery change
   useEffect(() => {
     async function fetchArticles() {
-      const freeRes = await fetch("http://localhost:8000/api/content/free");
-      const premiumRes = await fetch(
-        "http://localhost:8000/api/content/premium"
+      const allRes = await fetch(
+        `http://localhost:8000/api/content/all?page=${page}&limit=${limit}&category=${category}&pricing=${pricing}&query=${encodeURIComponent(
+          debouncedQuery
+        )}`
       );
-      const freeData = await freeRes.json();
-      const premiumData = await premiumRes.json();
+      const allData = await allRes.json();
 
-      const combined = [
-        ...(freeData.payload || []),
-        ...(premiumData.payload || []),
-      ];
-
-      // Fisher–Yates shuffle
-      for (let i = combined.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [combined[i], combined[j]] = [combined[j], combined[i]];
+      // Shuffle for "featured"
+      if (sort === "featured") {
+        for (let i = allData.payload.data.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [allData.payload.data[i], allData.payload.data[j]] = [
+            allData.payload.data[j],
+            allData.payload.data[i],
+          ];
+        }
       }
 
-      setArticles(combined);
+      setArticles(allData.payload.data);
+      setTotal(allData.payload.total || 0);
     }
     fetchArticles();
-  }, []);
+  }, [page, limit, category, pricing, debouncedQuery]);
 
-  console.log("Articles fetched:", articles);
-
+  // Extract unique categories dynamically
   useEffect(() => {
     setCategories((prev) => [
-      ...new Set([...prev, ...new Set(articles.map((a) => a.category))]),
+      ...new Set(["All", ...articles.map((a) => a.category)]),
     ]);
   }, [articles]);
 
   const filtered = useMemo(() => {
     let out = articles.filter((p) => {
-      const matchesQuery = (p.title + p.content + p.category)
+      const matchesQuery = (p.title + p.caption)
         .toLowerCase()
         .includes(query.toLowerCase());
       const matchesCategory =
@@ -101,7 +129,10 @@ export default function ArticlesPage() {
                   {PRICING.map((p, index) => (
                     <button
                       key={index}
-                      onClick={() => setPricing(p)}
+                      onClick={() => {
+                        setPage(1);
+                        setPricing(p);
+                      }}
                       className={`px-3 py-1.5 rounded-full text-sm border transition ${
                         pricing === p
                           ? "bg-indigo-600 text-white border-indigo-600"
@@ -121,7 +152,10 @@ export default function ArticlesPage() {
                   {CATEGORIES.map((c) => (
                     <button
                       key={c}
-                      onClick={() => setCategory(c)}
+                      onClick={() => {
+                        setPage(1);
+                        setCategory(c);
+                      }}
                       className={`px-3 py-1.5 rounded-full text-sm border transition ${
                         category === c
                           ? "bg-indigo-600 text-white border-indigo-600"
@@ -137,7 +171,10 @@ export default function ArticlesPage() {
                 <label className="block text-xs text-gray-500 mb-2">Sort</label>
                 <select
                   value={sort}
-                  onChange={(e) => setSort(e.target.value)}
+                  onChange={(e) => {
+                    setPage(1);
+                    setSort(e.target.value);
+                  }}
                   className="w-full rounded-lg border px-3 py-2 text-sm"
                 >
                   <option value="featured">Featured</option>
@@ -193,6 +230,43 @@ export default function ArticlesPage() {
                 </div>
               )}
             </motion.div>
+
+            {/* Pagination Controls */}
+            <div className="flex justify-center items-center gap-2 mt-6">
+              <button
+                onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                disabled={page === 1}
+                className="px-3 py-1 border rounded disabled:opacity-50"
+              >
+                Prev
+              </button>
+              <span>
+                Page {page} of {Math.ceil(total / limit) || 1}
+              </span>
+              <button
+                onClick={() =>
+                  setPage((p) => (p < Math.ceil(total / limit) ? p + 1 : p))
+                }
+                disabled={page >= Math.ceil(total / limit)}
+                className="px-3 py-1 border rounded disabled:opacity-50"
+              >
+                Next
+              </button>
+              <select
+                value={limit}
+                onChange={(e) => {
+                  setPage(1);
+                  setLimit(Number(e.target.value));
+                }}
+                className="ml-4 border rounded px-2 py-1"
+              >
+                {[10, 20, 30].map((n) => (
+                  <option key={n} value={n}>
+                    {n} / page
+                  </option>
+                ))}
+              </select>
+            </div>
           </main>
         </div>
 
@@ -213,6 +287,29 @@ export default function ArticlesPage() {
               </div>
               <div className="p-4 space-y-4 flex-1 overflow-y-auto">
                 <SearchBox query={query} setQuery={setQuery} />
+                <div>
+                  <label className="block text-xs text-gray-500 mb-2">
+                    Pricing
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {PRICING.map((p, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setPage(1);
+                          setPricing(p);
+                        }}
+                        className={`px-3 py-1.5 rounded-full text-sm border transition ${
+                          pricing === p
+                            ? "bg-indigo-600 text-white border-indigo-600"
+                            : "bg-white text-gray-700 border-gray-400"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-2">
                     Category
@@ -261,7 +358,7 @@ export default function ArticlesPage() {
                     <div className="text-sm text-gray-500 mt-4">
                       <span className="bg-blue-500 font-semibold py-1 px-2 rounded-full text-white">
                         {selectedArticle.category}
-                      </span>{" "}
+                      </span>
                       {selectedArticle.isPremium && (
                         <span className="bg-amber-500 font-semibold ml-2 py-1 px-2 rounded-full text-white">
                           Premium
@@ -276,16 +373,12 @@ export default function ArticlesPage() {
                     <FiX />
                   </button>
                 </div>
-                {/* <div>
-                  <Markdown>{selectedArticle.content}</Markdown>
-                  </div> */}
                 <div
                   className="prose leading-relaxed max-w-none pr-2 overflow-y-auto max-h-[70vh] flex flex-col gap-2"
                   dangerouslySetInnerHTML={{
                     __html: marked.parse(selectedArticle.content),
                   }}
                 ></div>
-                <div className="my-4"></div>
               </motion.div>
             </motion.div>
           )}
