@@ -3,6 +3,7 @@ import app from "./app.js";
 import variables from "./global/variables.js";
 import connectToDb from "./connections/db.js";
 import "./jobs/autopost.js";
+import "./jobs/keepalive.js";
 
 const server = http.createServer(app);
 

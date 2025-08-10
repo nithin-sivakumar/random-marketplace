@@ -198,7 +198,7 @@ Remember: No images, no tables, no external links, no additional fields. Output 
 async function postContentToLocalServer(contentObj) {
   try {
     const response = await axios.post(
-      `http://localhost:8000/api/content/add`,
+      `${variables.SERVER_URL}/api/content/add`,
       contentObj
     );
 

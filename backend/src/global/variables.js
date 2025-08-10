@@ -11,6 +11,7 @@ const variables = {
   AUTO_POST_FREQUENCY: process.env.AUTO_POST_FREQUENCY,
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
   AUTO_POST: process.env.AUTO_POST,
+  SERVER_URL: process.env.SERVER_URL,
 };
 
 for (let v in variables) {
