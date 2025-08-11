@@ -1,33 +1,45 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiSearch, FiFilter, FiX } from "react-icons/fi";
+import { marked } from "marked";
+import { TiStarFullOutline } from "react-icons/ti";
+import { HiSpeakerWave } from "react-icons/hi2";
 import { BACKEND_URL } from "../constants/globals";
 import { FadeLoader } from "react-spinners";
-import { TiStarFullOutline } from "react-icons/ti";
 import { useNavigate } from "react-router-dom";
 
 export default function ArticlesPage() {
   const searchParams = new URLSearchParams(window.location.search);
   const navigate = useNavigate();
 
+  // Initialize state from URL params (fallback to defaults)
   const [query, setQuery] = useState(searchParams.get("query") || "");
   const [category, setCategory] = useState(
     searchParams.get("category") || "All"
   );
   const [sort, setSort] = useState(searchParams.get("sort") || "featured");
   const [articles, setArticles] = useState([]);
+  const [selectedArticle, setSelectedArticle] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [CATEGORIES, setCategories] = useState(["All"]);
   const [pricing, setPricing] = useState(searchParams.get("pricing") || "All");
 
+  // Pagination state
   const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
   const [limit, setLimit] = useState(Number(searchParams.get("limit")) || 10);
   const [total, setTotal] = useState(0);
+
   const [loading, setLoading] = useState(false);
 
   const PRICING = ["All", "Free", "Premium"];
+
   const [debouncedQuery, setDebouncedQuery] = useState(query);
+
+  const emojis = ["👍", "❤️", "💀", "😂", "😭", "🔥"];
+
   const topRef = useRef(null);
+
+  const [isNarrating, setIsNarrating] = useState(false);
 
   useEffect(() => {
     if (topRef.current) {
@@ -35,6 +47,7 @@ export default function ArticlesPage() {
     }
   }, [page]);
 
+  // Sync state → URL params
   useEffect(() => {
     const params = new URLSearchParams();
     if (query) params.set("query", query);
@@ -48,13 +61,18 @@ export default function ArticlesPage() {
     window.history.replaceState({}, "", newUrl);
   }, [query, category, pricing, sort, page, limit]);
 
+  // Debounce logic
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedQuery(query);
-    }, 1000);
-    return () => clearTimeout(handler);
+    }, 1000); // 1000ms delay
+
+    return () => {
+      clearTimeout(handler);
+    };
   }, [query]);
 
+  // Fetch articles when filters/pagination/debouncedQuery change
   useEffect(() => {
     async function fetchArticles() {
       setLoading(true);
@@ -65,6 +83,7 @@ export default function ArticlesPage() {
       );
       const allData = await allRes.json();
 
+      // Shuffle for "featured"
       if (sort === "featured") {
         for (let i = allData.payload.data.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
@@ -74,6 +93,7 @@ export default function ArticlesPage() {
           ];
         }
       }
+
       setArticles(allData.payload.data);
       setTotal(allData.payload.total || 0);
       setLoading(false);
@@ -81,6 +101,7 @@ export default function ArticlesPage() {
     fetchArticles();
   }, [page, limit, category, pricing, debouncedQuery]);
 
+  // Extract unique categories dynamically
   useEffect(() => {
     setCategories((prev) => [
       ...new Set(["All", ...articles.map((a) => a.category)]),
@@ -106,15 +127,46 @@ export default function ArticlesPage() {
     return out;
   }, [articles, query, category, sort, pricing]);
 
+  const handleNarrateToggle = () => {
+    if (!selectedArticle?.content) return;
+
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+      setIsNarrating(false);
+    } else {
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = selectedArticle.content;
+      const plainText = tempDiv.textContent.trim();
+
+      const utterance = new SpeechSynthesisUtterance(plainText);
+      utterance.lang = "en-US";
+      utterance.rate = 1;
+      utterance.pitch = 1;
+
+      // When narration ends, reset button label
+      utterance.onend = () => setIsNarrating(false);
+      utterance.onerror = () => setIsNarrating(false);
+
+      window.speechSynthesis.speak(utterance);
+      setIsNarrating(true);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-300 via-gray-200 to-white px-6">
+    <div className="min-h-screen bg-gradient-to-b from-gray-400 via-gray-200 to-white px-6">
       <div ref={topRef}></div>
       <div className="max-w-7xl py-6 mx-auto space-y-6">
         <Header />
 
         {loading && (
           <div className="fixed z-[100] top-0 right-0 h-full w-full bg-gray-400/90 flex items-center justify-center">
-            <FadeLoader color={"#fff"} loading={loading} size={150} />
+            <FadeLoader
+              color={"#fff"}
+              loading={loading}
+              size={150}
+              aria-label="Loading Spinner"
+              data-testid="loader"
+            />
           </div>
         )}
 
@@ -140,7 +192,7 @@ export default function ArticlesPage() {
                         setPage(1);
                         setPricing(p);
                       }}
-                      className={`px-3 py-1.5 rounded-full text-sm border ${
+                      className={`px-3 py-1.5 rounded-full text-sm border transition cursor-pointer ${
                         pricing === p
                           ? "bg-indigo-600 text-white border-indigo-600"
                           : "bg-gray-200 text-gray-700 border-gray-400"
@@ -163,7 +215,7 @@ export default function ArticlesPage() {
                         setPage(1);
                         setCategory(c);
                       }}
-                      className={`px-3 py-1.5 rounded-full text-sm border ${
+                      className={`px-3 py-1.5 rounded-full text-sm border transition cursor-pointer ${
                         category === c
                           ? "bg-indigo-600 text-white border-indigo-600"
                           : "bg-gray-200 text-gray-700 border-gray-400"
@@ -182,7 +234,7 @@ export default function ArticlesPage() {
                     setPage(1);
                     setSort(e.target.value);
                   }}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                  className="w-full cursor-pointer rounded-lg border px-3 py-2 text-sm"
                 >
                   <option value="featured">Featured</option>
                   <option value="title">Title</option>
@@ -203,7 +255,7 @@ export default function ArticlesPage() {
                 {pricing} articles
               </h2>
               <button
-                className="lg:hidden px-3 py-2 border rounded-lg flex items-center gap-2 bg-gray-300"
+                className="lg:hidden px-3 py-2 border rounded-lg flex items-center gap-2 cursor-pointer bg-gray-300"
                 onClick={() => setFiltersOpen(true)}
               >
                 <FiFilter /> Filters
@@ -243,12 +295,12 @@ export default function ArticlesPage() {
               )}
             </motion.div>
 
-            {/* Pagination */}
+            {/* Pagination Controls */}
             <div className="flex justify-center items-center gap-2 mt-6">
               <button
                 onClick={() => setPage((p) => Math.max(p - 1, 1))}
                 disabled={page === 1}
-                className="px-3 py-1 border border-indigo-600 hover:bg-indigo-600 hover:text-white rounded disabled:opacity-50"
+                className="px-3 py-1 border border-indigo-600 cursor-pointer hover:bg-indigo-600 hover:text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Prev
               </button>
@@ -260,7 +312,7 @@ export default function ArticlesPage() {
                   setPage((p) => (p < Math.ceil(total / limit) ? p + 1 : p))
                 }
                 disabled={page >= Math.ceil(total / limit)}
-                className="px-3 py-1 border border-indigo-600 hover:bg-indigo-600 hover:text-white rounded disabled:opacity-50"
+                className="px-3 py-1 border border-indigo-600 cursor-pointer hover:bg-indigo-600 hover:text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>
@@ -270,7 +322,7 @@ export default function ArticlesPage() {
                   setPage(1);
                   setLimit(Number(e.target.value));
                 }}
-                className="ml-4 border rounded px-2 py-1"
+                className="ml-4 cursor-pointer border rounded px-2 py-1"
               >
                 {[10, 20, 30].map((n) => (
                   <option key={n} value={n}>
@@ -281,6 +333,150 @@ export default function ArticlesPage() {
             </div>
           </main>
         </div>
+
+        {/* Mobile filters */}
+        <AnimatePresence>
+          {filtersOpen && (
+            <motion.aside
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              className="fixed inset-y-0 right-0 w-full max-w-md bg-gray-300 rounded-l-2xl shadow-xl z-50 lg:hidden flex flex-col"
+            >
+              <div className="p-4 border-b flex items-center justify-between">
+                <h3 className="font-semibold">Filters</h3>
+                <button
+                  className="p-2 cursor-pointer hover:bg-gray-400 rounded-full"
+                  onClick={() => setFiltersOpen(false)}
+                >
+                  <FiX />
+                </button>
+              </div>
+              <div className="p-4 space-y-4 flex-1 overflow-y-auto">
+                <SearchBox query={query} setQuery={setQuery} />
+                <div>
+                  <label className="block text-xs text-gray-700 mb-2">
+                    Pricing
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {PRICING.map((p, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setPage(1);
+                          setPricing(p);
+                        }}
+                        className={`px-3 py-1.5 rounded-full text-sm border transition cursor-pointer ${
+                          pricing === p
+                            ? "bg-indigo-600 text-white border-indigo-600"
+                            : "bg-gray-200 text-gray-700 border-gray-400"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-700 mb-2">
+                    Category
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {CATEGORIES.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setCategory(c)}
+                        className={`px-3 py-1.5 rounded-full text-sm border transition cursor-pointer ${
+                          category === c
+                            ? "bg-indigo-600 text-white border-indigo-600"
+                            : "bg-gray-200 text-gray-700 border-gray-200"
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.aside>
+          )}
+        </AnimatePresence>
+
+        {/* Article Modal */}
+        <AnimatePresence>
+          {selectedArticle && (
+            <motion.div
+              className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 bg-black/80 bg-opacity-50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                initial={{ scale: 0.95, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.95, y: 20 }}
+                className="max-w-5xl w-full bg-gray-300 rounded-2xl shadow-xl p-6 overflow-y-hidden max-h-[90vh] space-y-0"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="w-full">
+                    <h3 className="text-xl font-bold">
+                      {selectedArticle.title}
+                    </h3>
+                    <div className="gap-2 text-xs md:text-sm text-gray-500 mt-4 flex flex-col md:flex-row items-start md:items-center justify-between w-full">
+                      <div className="flex gap-2">
+                        <span className="bg-blue-500 font-semibold py-1 px-2 rounded-full text-white">
+                          {selectedArticle.category}
+                        </span>
+                        {selectedArticle.isPremium && (
+                          <span className="bg-amber-500 font-semibold py-1 px-2 rounded-full text-white">
+                            Premium
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        onClick={handleNarrateToggle}
+                        className="text-black cursor-pointer bg-gray-600 border border-gray-700 px-4 py-1 rounded-xl"
+                      >
+                        <span className="font-semibold">
+                          {isNarrating ? "🔇" : "🔊"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedArticle(null)}
+                    className="p-2 cursor-pointer rounded-full hover:bg-gray-400"
+                  >
+                    <FiX />
+                  </button>
+                </div>
+                <div
+                  className="prose leading-relaxed max-w-none pr-2 overflow-y-auto max-h-[70vh] flex flex-col"
+                  dangerouslySetInnerHTML={{
+                    __html: marked.parse(selectedArticle.content),
+                  }}
+                ></div>
+              </motion.div>
+              <div
+                initial={{ scale: 0.95, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.95, y: 20 }}
+                className="mt-2 select-none bg-gray-300 rounded-2xl shadow-xl px-6 py-2 flex items-center justify-center gap-2"
+              >
+                {emojis.map((e, index) => {
+                  return (
+                    <button
+                      key={index}
+                      className="text-2xl grayscale-50 hover:grayscale-0 cursor-pointer hover:scale-150 transition-all duration-150 active:scale-75"
+                    >
+                      {e}
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -288,20 +484,22 @@ export default function ArticlesPage() {
 
 function Header() {
   return (
-    <header className="flex items-center gap-3">
-      <motion.div
-        initial={{ rotateX: 0 }}
-        animate={{
-          rotate: 360,
-          transition: { duration: 1.4, repeat: Infinity },
-        }}
-        className="rounded-full bg-indigo-600 w-12 h-12 flex items-center justify-center text-white font-bold"
-      >
-        RM
-      </motion.div>
-      <div>
-        <div className="text-xs text-gray-500">Blog</div>
-        <div className="text-lg font-semibold">Random Marketplace</div>
+    <header className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <motion.div
+          initial={{ rotateX: 0 }}
+          animate={{
+            rotate: 360,
+            transition: { duration: 1.4, repeat: Infinity },
+          }}
+          className="rounded-full bg-indigo-600 w-12 h-12 flex items-center justify-center text-white font-bold"
+        >
+          RM
+        </motion.div>
+        <div>
+          <div className="text-xs text-gray-500">Blog</div>
+          <div className="text-lg font-semibold">Random Marketplace</div>
+        </div>
       </div>
     </header>
   );
