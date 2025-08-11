@@ -13,4 +13,6 @@ contentRouter.route("/add").post(contentController.add);
 
 contentRouter.route("/all").get(contentController.getAll);
 
+contentRouter.route("/view/:id").get(contentController.getOne);
+
 export default contentRouter;
